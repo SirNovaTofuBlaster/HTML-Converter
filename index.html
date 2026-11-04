@@ -214,7 +214,7 @@ function apply(doc, segs, db, rules){
 }
 
 /* ---------- the pipeline ---------- */
-let OUT='', OUT_NAME='', MISSING=[];
+let OUT='', OUT_NAME='', MISSING=[], MISSING_LANG='';
 async function convert(src, name){
   $('done').hidden = true; $('copyMsg').textContent='';
   if (!ready()){ $('setup').hidden = false; setStatus('err','Finish the setup first (fill in both fields).'); return; }
@@ -224,7 +224,7 @@ async function convert(src, name){
     const {db} = await loadDb();
     const {doc, segs} = parse(src);
     const r = apply(doc, segs, db, rules);
-    OUT = r.html; OUT_NAME = name.replace(/(\.html?)?$/i,'_converted.html'); MISSING = r.left;
+    OUT = r.html; OUT_NAME = name.replace(/(\.html?)?$/i,'_converted.html'); MISSING = r.left; MISSING_LANG = LANG;
     $('fB').srcdoc = OUT; $('done').hidden = false; $('btnMiss').hidden = !MISSING.length;
     const n = MISSING.length;
     if (n) setStatus('warn', `Done, but ${n} text${n===1?' isn\'t':'s aren\'t'} in the database yet and ${n===1?'was':'were'} left as written.`);
@@ -243,7 +243,7 @@ function readFile(f){ if(!f) return; const r=new FileReader(); r.onload=()=>conv
 $('btnDl').onclick = () => { try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([OUT],{type:'text/html'})); a.download=OUT_NAME; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ setStatus('err','The browser blocked the download.'); } };
 
 $('btnMiss').onclick = async () => {
-  const o = {}; MISSING.forEach(k=>o[k]='');
+  const t = {}; MISSING.forEach(k=>t[k]=''); const o = {language: MISSING_LANG, texts: t};
   try{ await navigator.clipboard.writeText(JSON.stringify(o, null, 2)); $('copyMsg').textContent='Copied. Paste it into the chat.'; }
   catch(e){ $('copyMsg').textContent='The browser blocked copying.'; }
 };
