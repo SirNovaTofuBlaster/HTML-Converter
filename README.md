@@ -1,24 +1,26 @@
 # HTML Converter
 
-Upload an HTML file and get the same page back translated, with tags, images and layout kept as they are.
+Upload an HTML file and get the same page back converted. Tags, images and layout stay exactly as they are.
 
-- **Languages:** European Portuguese (pt-PT). Finnish is planned.
-- **Translations** come from your own Claude API key, and only for text that isn't in your database yet.
-- **The database** (one `glossary-<language>.json` per language) lives in a separate **private** GitHub repo. This public repo contains only the website: no keys, no translations.
+Text that has been converted before is reused from your database, and only new text is sent to Claude.
+
+This public repo contains only the website. Your database and your rules live in a separate **private** GitHub repo.
 
 ## Setup (once per computer)
 
-1. Open the site and click ⚙ Settings.
+1. Open the site and click ⚙.
 2. **Claude API key:** create one at console.anthropic.com.
-3. **GitHub token:** create a fine-grained token (GitHub → Settings → Developer settings → Fine-grained tokens) with:
-   - Repository access: **only** your private database repo
-   - Permissions: **Contents → Read and write**
-4. **Database repo:** `your-username/your-private-repo`
-5. Click **Save on this computer**.
+3. **GitHub token:** create a fine-grained token with access to your private repo only, with **Contents → Read and write**.
+4. **Private repo:** `your-username/your-private-repo`.
+5. Click **Save**. Everything is kept in that browser only.
 
-Keys are stored only in that browser's local storage.
+## What goes in the private repo
 
-## Rules
+For each language flag, one rules file that you write, and one database file that the site creates:
 
-- Portuguese output must be European Portuguese. Answers containing Brazilian-only wording are rejected and retried once; if still wrong, the text is left in English rather than saved.
-- HTML tags inside sentences are sent as `[[0]]…[[/0]]` markers and must come back intact.
+- `rules-<code>.json`, with these fields:
+  - `instructions` (required): what Claude should do for this language
+  - `htmlLang`: language code written into the converted page
+  - `forbiddenWords` and `forbiddenPatterns`: answers containing these are rejected and retried once
+  - `swapDecimal`: `true` if numbers should switch between `.` and `,` when reusing text
+- `glossary-<code>.json`: created and updated automatically

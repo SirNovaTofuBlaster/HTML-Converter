@@ -5,259 +5,219 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>HTML Converter</title>
 <style>
-  :root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e3e1dc;--acc:#2f5bd3;--ok:#1a7f4b;--bad:#b3261e;--warnbg:#fff4dc}
+  :root{--bg:#f6f5f2;--card:#fff;--ink:#1d1d1f;--mute:#6b6b70;--line:#e3e1dc;--acc:#2f5bd3;--ok:#1a7f4b;--bad:#b3261e;--warn:#8a5300}
   *{box-sizing:border-box}
   body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-  .wrap{max-width:1100px;margin:0 auto;padding:24px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+  .wrap{max-width:640px;margin:0 auto;padding:28px 20px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
   header h1{margin:0;font-size:22px}
   header .sub{color:var(--mute);font-size:14px}
-  .badge{font-size:12px;padding:3px 8px;border-radius:20px;background:var(--warnbg);color:#7a5200;margin-left:8px;vertical-align:middle}
-  .badge.live{background:#e5f4ec;color:var(--ok)}
-  button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer}
+  button{font:inherit;border:1px solid var(--line);background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer}
   button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
-  button:disabled{opacity:.5;cursor:default}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px}
-  #drop{border:2px dashed #c9c6bf;border-radius:12px;padding:38px;text-align:center;cursor:pointer;background:#fff;transition:.15s}
-  #drop.over{border-color:var(--acc);background:#eef2fd}
-  #drop b{font-size:17px}
-  #drop .small{margin-top:6px}
-  .small{font-size:13px;color:var(--mute)}
-  ol.log{list-style:none;margin:0;padding:0}
-  ol.log li{padding:5px 0;display:flex;gap:10px;align-items:flex-start}
-  ol.log li .ic{width:18px;flex:none;text-align:center}
-  ol.log li.run .ic::before{content:"";display:inline-block;width:12px;height:12px;border:2px solid var(--acc);border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite}
-  ol.log li.done .ic::before{content:"✓";color:var(--ok);font-weight:700}
-  ol.log li.err .ic::before{content:"!";color:var(--bad);font-weight:700}
-  ol.log li.err{color:var(--bad)}
-  ol.log li.warn .ic::before{content:"↻";color:#b36b00;font-weight:700}
-  ol.log li.warn{color:#8a5300}
-  @keyframes sp{to{transform:rotate(360deg)}}
-  .result{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  .previews{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-  @media (max-width:850px){.previews{grid-template-columns:1fr}}
-  .previews iframe{width:100%;height:460px;border:1px solid var(--line);border-radius:8px;background:#fff}
-  .lbl{font-size:12px;color:var(--mute);margin-bottom:4px}
-  details summary{cursor:pointer;color:var(--mute);font-size:13px;margin-top:12px}
-  .newlist{font-size:13px;max-height:220px;overflow:auto;margin-top:6px}
-  .newlist div{padding:4px 0;border-bottom:1px dashed var(--line)}
-  .newlist span{color:var(--ok)}
-  /* settings */
-  #settings{display:none}
-  #settings.open{display:block}
-  .grid{display:grid;grid-template-columns:200px 1fr;gap:10px 14px;align-items:center}
-  @media (max-width:650px){.grid{grid-template-columns:1fr}}
-  .grid input,.grid select{font:inherit;padding:7px 9px;border:1px solid var(--line);border-radius:7px;width:100%}
-  .grid label{font-size:14px}
-  .hint{grid-column:2;font-size:12px;color:var(--mute);margin-top:-6px}
-  @media (max-width:650px){.hint{grid-column:1}}
-  .msg{font-size:13px;margin-top:8px}
+  button.link{border:0;background:none;color:var(--mute);text-decoration:underline;padding:8px 4px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;margin-bottom:16px}
+  .card h2{margin:0 0 12px;font-size:16px}
   .topright{display:flex;gap:8px;align-items:center}
   .langbox{display:flex;gap:6px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:5px}
-  .flag{display:flex;flex-direction:column;align-items:center;gap:3px;border:2px solid transparent;border-radius:8px;padding:5px 8px;background:none;font-size:11px;color:var(--mute);position:relative}
+  .flag{border:2px solid transparent;border-radius:8px;padding:4px 6px;background:none;line-height:0}
   .flag svg{width:36px;height:24px;border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.12);display:block}
-  .flag.on{border-color:var(--acc);color:var(--ink);font-weight:600}
-  .flag:disabled{opacity:.45}
-  .flag .soon{font-size:9px;text-transform:uppercase;letter-spacing:.04em}
+  .flag.on{border-color:var(--acc)}
+  .flag:disabled{opacity:.4;cursor:default}
   #btnSettings{font-size:18px;padding:8px 11px}
-  .msg.ok{color:var(--ok)} .msg.err{color:var(--bad)}
+  label{display:block;font-size:14px;font-weight:600;margin:14px 0 4px}
+  label:first-of-type{margin-top:0}
+  input,select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;width:100%}
+  .hint{font-size:12px;color:var(--mute);margin-top:3px}
+  details summary{cursor:pointer;color:var(--mute);font-size:13px;margin-top:14px}
+  .row{display:flex;gap:8px;align-items:center;margin-top:16px}
+  .small{font-size:13px;color:var(--mute)}
+  #drop{border:2px dashed #c9c6bf;border-radius:12px;padding:44px 20px;text-align:center;cursor:pointer;transition:.15s}
+  #drop.over{border-color:var(--acc);background:#eef2fd}
+  #drop b{font-size:17px}
+  #status{display:flex;gap:10px;align-items:center;margin-top:16px;font-size:14px}
+  #status[hidden],#done[hidden],#setup[hidden]{display:none}
+  #status.err{color:var(--bad)} #status.ok{color:var(--ok)} #status.warn{color:var(--warn)}
+  .spin{width:14px;height:14px;border:2px solid var(--acc);border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;flex:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #done{margin-top:14px}
+  #done iframe{width:100%;height:420px;border:1px solid var(--line);border-radius:8px;background:#fff;margin-top:10px}
+  #setMsg{font-size:13px;margin-top:8px;color:var(--ok)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div>
-      <h1>HTML Converter <span class="badge" id="modeBadge">Not set up</span></h1>
+      <h1>HTML Converter</h1>
       <div class="sub">Upload an HTML file to convert it.</div>
     </div>
     <div class="topright">
       <div class="langbox" id="langbox" role="radiogroup" aria-label="Language"></div>
-      <button id="btnSettings" title="Settings" aria-label="Settings">⚙</button>
+      <button id="btnSettings" title="Setup" aria-label="Setup">⚙</button>
     </div>
   </header>
 
-  <div class="card" id="settings">
-    <div class="grid">
-      <label for="sKey">Claude API key</label>
-      <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
-      <div class="hint">From console.anthropic.com. Used only to translate text that isn't in the database yet.</div>
+  <section class="card" id="setup" hidden>
+    <h2>Setup</h2>
+    <label for="sKey">Claude API key</label>
+    <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
+    <div class="hint">From console.anthropic.com</div>
 
+    <label for="sGh">GitHub token</label>
+    <input id="sGh" type="password" placeholder="github_pat_…" autocomplete="off">
+    <div class="hint">Needs read and write access to your private repo only.</div>
+
+    <label for="sRepo">Private repo</label>
+    <input id="sRepo" type="text" placeholder="your-username/your-private-repo" autocomplete="off">
+
+    <details>
+      <summary>Advanced</summary>
       <label for="sModel">Claude model</label>
       <select id="sModel">
-        <option value="claude-sonnet-5-5">Claude Sonnet 5.5 (recommended)</option>
-        <option value="claude-haiku-5-5">Claude Haiku 5.5 (cheaper)</option>
-        <option value="claude-opus-5-5">Claude Opus 5.5 (best, most expensive)</option>
+        <option value="claude-sonnet-5-5">Sonnet 5.5 (recommended)</option>
+        <option value="claude-haiku-5-5">Haiku 5.5 (cheaper)</option>
+        <option value="claude-opus-5-5">Opus 5.5 (most expensive)</option>
       </select>
+    </details>
 
-      <label for="sGhToken">GitHub token</label>
-      <input id="sGhToken" type="password" placeholder="github_pat_…" autocomplete="off">
-      <div class="hint">Fine-grained token with access to the private database repo only (Contents: read and write).</div>
-
-      <label for="sRepo">Database repo</label>
-      <input id="sRepo" type="text" placeholder="your-username/your-private-repo">
-
-      <label for="sPath">Database file name</label>
-      <input id="sPath" type="text" value="glossary">
-      <div class="hint">One file per language, e.g. glossary-pt-PT.json, glossary-fi.json.</div>
+    <div class="row">
+      <button class="primary" id="btnSave">Save</button>
+      <button class="link" id="btnForget">Forget keys</button>
     </div>
-    <div style="margin-top:14px">
-      <button class="primary" id="btnSave">Save on this computer</button>
-      <button id="btnClear">Forget keys</button>
-    </div>
-    <div class="msg" id="setMsg"></div>
-    <p class="small" style="margin-bottom:0">Keys are stored only in this browser on this computer. They are never part of the website's code. Without a GitHub token, the database is kept in this browser only.</p>
-  </div>
+    <div id="setMsg"></div>
+    <p class="small" style="margin:12px 0 0">Saved only in this browser, on this computer.</p>
+  </section>
 
-  <div class="card">
+  <section class="card">
     <div id="drop">
-      <b>Drop an HTML file here, or click to choose</b>
-      <div class="small">Translation starts automatically.</div>
+      <b>Drop an HTML file here</b>
+      <div class="small">or click to choose one</div>
       <input type="file" id="file" accept=".html,.htm" hidden>
     </div>
-  </div>
-
-  <div class="card" id="progress" hidden>
-    <ol class="log" id="log"></ol>
-    <div id="result" hidden>
-      <div class="result" style="margin-top:12px">
-        <button class="primary" id="btnDl">Download translated HTML</button>
-        <button id="btnCopy">Copy HTML</button>
-        <span class="small" id="dlMsg"></span>
-      </div>
-      <details id="newWrap"><summary id="newSum"></summary><div class="newlist" id="newList"></div></details>
-      <div class="previews">
-        <div><div class="lbl">Original</div><iframe id="fA" sandbox></iframe></div>
-        <div><div class="lbl" id="lblOut">Translated</div><iframe id="fB" sandbox></iframe></div>
-      </div>
+    <div id="status" hidden></div>
+    <div id="done" hidden>
+      <button class="primary" id="btnDl">Download</button>
+      <details><summary>Preview</summary><iframe id="fB" sandbox></iframe></details>
     </div>
-  </div>
+  </section>
 </div>
 
 <script>
-/* =========================================================
-   Languages. Each language has its own strict rules and its own database file.
-   ========================================================= */
+const $ = id => document.getElementById(id);
+
+/* ---------- flags (each flag is one language; its rules live in the private repo) ---------- */
 const FLAG_PT = `<svg viewBox="0 0 600 400"><rect width="600" height="400" fill="#da291c"/><rect width="240" height="400" fill="#046a38"/><circle cx="240" cy="200" r="78" fill="none" stroke="#ffe900" stroke-width="16"/><path d="M200 150h80v62a40 40 0 0 1-80 0z" fill="#fff" stroke="#da291c" stroke-width="12"/><g fill="#002d72"><rect x="232" y="168" width="16" height="22"/><rect x="232" y="200" width="16" height="22"/><rect x="214" y="184" width="16" height="22"/><rect x="250" y="184" width="16" height="22"/></g></svg>`;
 const FLAG_FI = `<svg viewBox="0 0 18 11"><rect width="18" height="11" fill="#fff"/><rect x="5" width="3" height="11" fill="#002f6c"/><rect y="4" width="18" height="3" fill="#002f6c"/></svg>`;
-const LANGS = {
-  'pt-PT': { label:'PT', name:'European Portuguese', flag:FLAG_PT, enabled:true,
-    rules:`Target language: European Portuguese ONLY (Portugal, pt-PT, current spelling after the 1990 Orthographic Agreement).
-Brazilian Portuguese is NEVER acceptable, not even single words. Use European vocabulary and grammar, for example:
-ecrã (not tela), utilizador (not usuário), ficheiro (not arquivo), guardar (not salvar), registo (not registro), contacto (not contato), telemóvel (not celular), equipa (not time), "está a carregar" (not "está carregando").
-Use the formal "você"-free European style: prefer the verb without a pronoun or "o utilizador", as Portuguese websites do.
-Numbers: decimal comma (96.5% becomes 96,5%), but version numbers like 2.5 stay as they are.`,
-    // words that only appear in Brazilian Portuguese: any hit = reject and retry
-    forbidden:[...['tela','telas','usuário','usuários','usuária','arquivo','arquivos','salvar','salva','salvas','salvou','salvando','registro','registros','contato','contatos','celular','celulares','ônibus','acessar','baixar','time de']
-      .map(w=>new RegExp('(?<!\\p{L})'+w+'(?!\\p{L})','iu')), /(?<!\p{L})(está|estão|estou|estamos|esteja)\s+\p{L}+ndo(?!\p{L})/iu] },
-  'fi': { label:'FI', name:'Finnish', flag:FLAG_FI, enabled:false, rules:'', forbidden:[] }
-};
-let LANG = 'pt-PT';
-function renderLangs(){
-  $('langbox').innerHTML = Object.entries(LANGS).map(([code,l])=>
-    `<button class="flag${code===LANG?' on':''}" data-code="${code}" role="radio" aria-checked="${code===LANG}" ${l.enabled?'':'disabled'} title="${l.name}${l.enabled?'':' (coming soon)'}">${l.flag}<span>${l.label}</span>${l.enabled?'':'<span class="soon">soon</span>'}</button>`).join('');
-  $('langbox').querySelectorAll('.flag:not(:disabled)').forEach(b=>b.onclick=()=>{ LANG=b.dataset.code; store.set('lang',LANG); renderLangs(); updateBadge(); });
-}
-const brazilianHits = (lang, text) => LANGS[lang].forbidden.filter(re=>re.test(text)).length;
+const LANGS = { pt:{flag:FLAG_PT, enabled:true}, fi:{flag:FLAG_FI, enabled:false} };
 
-/* =========================================================
-   Settings
-   ========================================================= */
-const $ = id => document.getElementById(id);
+/* ---------- settings (kept only in this browser) ---------- */
 const store = {
   get(k, d=''){ try{ return localStorage.getItem('htmlconv.'+k) ?? d; }catch(e){ return d; } },
   set(k, v){ try{ v ? localStorage.setItem('htmlconv.'+k, v) : localStorage.removeItem('htmlconv.'+k); }catch(e){} }
 };
-const cfg = () => ({ key: store.get('key'), model: store.get('model','claude-sonnet-5-5'),
-  gh: store.get('gh'), repo: store.get('repo'), path: store.get('path','glossary') });
+const cfg = () => ({ key:store.get('key'), gh:store.get('gh'), repo:store.get('repo'), model:store.get('model','claude-sonnet-5-5') });
+const ready = () => { const c = cfg(); return !!(c.key && c.gh && c.repo); };
 
-function loadSettingsForm(){ const c = cfg(); $('sKey').value=c.key; $('sModel').value=c.model; $('sGhToken').value=c.gh; $('sRepo').value=c.repo; $('sPath').value=c.path; updateBadge(); }
-function updateBadge(){ const c = cfg(), b = $('modeBadge');
-  if (!c.key){ b.textContent='Not set up'; b.className='badge'; }
-  else { b.textContent = c.gh && c.repo ? 'Ready · private database' : 'Ready · database in this browser only'; b.className='badge live'; } }
-$('btnSettings').onclick = () => $('settings').classList.toggle('open');
-$('btnSave').onclick = () => { store.set('key',$('sKey').value.trim()); store.set('model',$('sModel').value); store.set('gh',$('sGhToken').value.trim());
-  store.set('repo',$('sRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\/$/,'')); store.set('path',($('sPath').value.trim()||'glossary').replace(/\.json$/i,''));
-  updateBadge(); $('setMsg').className='msg ok'; $('setMsg').textContent='Saved.'; };
-$('btnClear').onclick = () => { ['key','gh','repo'].forEach(k=>store.set(k,'')); loadSettingsForm(); $('setMsg').className='msg ok'; $('setMsg').textContent='Keys removed from this computer.'; };
+let LANG = LANGS[store.get('lang')]?.enabled ? store.get('lang') : 'pt';
+function renderLangs(){
+  $('langbox').innerHTML = Object.entries(LANGS).map(([code,l]) =>
+    `<button class="flag${code===LANG?' on':''}" data-code="${code}" role="radio" aria-checked="${code===LANG}" aria-label="Language" ${l.enabled?'':'disabled title="Coming soon"'}>${l.flag}</button>`).join('');
+  $('langbox').querySelectorAll('.flag:not(:disabled)').forEach(b => b.onclick = () => { LANG = b.dataset.code; store.set('lang', LANG); renderLangs(); });
+}
+function fillForm(){ const c = cfg(); $('sKey').value=c.key; $('sGh').value=c.gh; $('sRepo').value=c.repo; $('sModel').value=c.model; }
+$('btnSettings').onclick = () => { $('setup').hidden = !$('setup').hidden; };
+$('btnSave').onclick = () => {
+  store.set('key',$('sKey').value.trim()); store.set('gh',$('sGh').value.trim());
+  store.set('repo',$('sRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/$/,''));
+  store.set('model',$('sModel').value);
+  if (ready()){ $('setMsg').textContent=''; $('setup').hidden = true; setStatus('ok','Saved. Drop a file to start.'); }
+  else { $('setMsg').style.color='var(--bad)'; $('setMsg').textContent='Please fill in all three fields.'; }
+};
+$('btnForget').onclick = () => { ['key','gh','repo'].forEach(k=>store.set(k,'')); fillForm(); $('setMsg').style.color='var(--ok)'; $('setMsg').textContent='Removed from this computer.'; };
 
-/* =========================================================
-   Database: private GitHub repo, or this browser
-   ========================================================= */
-const b64enc = str => { const bytes = new TextEncoder().encode(str); let bin=''; for (let i=0;i<bytes.length;i+=0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i,i+0x8000)); return btoa(bin); };
+/* ---------- status line ---------- */
+function setStatus(kind, text){ const s=$('status'); if(!text){ s.hidden=true; return; } s.hidden=false; s.className=kind;
+  s.innerHTML = (kind==='run' ? '<span class="spin"></span>' : '') + '<span></span>'; s.lastChild.textContent = text; }
+
+/* ---------- private repo: database + rules ---------- */
+const b64enc = str => { const bytes=new TextEncoder().encode(str); let bin=''; for (let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(bin); };
 const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g,'')), c=>c.charCodeAt(0)));
 const sortObj = o => Object.fromEntries(Object.keys(o).sort((a,b)=>a.localeCompare(b)).map(k=>[k,o[k]]));
+const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
-const LocalDB = {
-  name(){ return `${LANGS[LANG].name} database in this browser`; },
-  k(){ return 'localdb-' + LANG; },
-  async load(){ try{ return JSON.parse(store.get(this.k(),'{}')); }catch(e){ return {}; } },
-  async save(added){ const db = await this.load(); Object.assign(db, added); store.set(this.k(), JSON.stringify(sortObj(db))); }
-};
-const GitHubDB = {
-  name(){ return `private ${LANGS[LANG].name} database`; },
-  url(){ const c=cfg(); return `https://api.github.com/repos/${c.repo}/contents/${(c.path+'-'+LANG+'.json').split('/').map(encodeURIComponent).join('/')}`; },
+const GH = {
+  url(path){ return `https://api.github.com/repos/${cfg().repo}/contents/${path.split('/').map(encodeURIComponent).join('/')}`; },
   headers(){ return {Authorization:'Bearer '+cfg().gh, Accept:'application/vnd.github+json', 'X-GitHub-Api-Version':'2022-11-28'}; },
-  async fetchFile(){
-    const r = await fetch(this.url()+'?t='+Date.now(), {headers:this.headers(), cache:'no-store'});
-    if (r.status===404) return {db:{}, sha:null};
-    if (r.status===401) throw new Error('GitHub token was rejected. Check it in Settings.');
-    if (r.status===403) throw new Error('GitHub token has no access to the database repo. Check Settings.');
-    if (!r.ok) throw new Error('Could not read the database from GitHub ('+r.status+').');
-    const j = await r.json(); const parsed = JSON.parse(b64dec(j.content) || '{}');
-    return {db: parsed.entries || parsed, sha:j.sha};
+  async get(path){
+    const r = await fetch(this.url(path)+'?t='+Date.now(), {headers:this.headers(), cache:'no-store'});
+    if (r.status===404) return null;
+    if (r.status===401) throw new Error('GitHub token was rejected. Check it in setup (⚙).');
+    if (r.status===403) throw new Error('GitHub token has no access to the private repo. Check it in setup (⚙).');
+    if (!r.ok) throw new Error('GitHub error '+r.status+'.');
+    const j = await r.json(); return {text:b64dec(j.content), sha:j.sha};
   },
-  async load(){ return (await this.fetchFile()).db; },
-  async save(added){
-    for (let attempt=0; attempt<3; attempt++){
-      const {db, sha} = await this.fetchFile();           // always merge into the latest version
-      Object.assign(db, added);
-      const body = {message:`Add ${Object.keys(added).length} translation(s)`, content:b64enc(JSON.stringify({entries:sortObj(db)}, null, 2)+'\n')};
-      if (sha) body.sha = sha;
-      const r = await fetch(this.url(), {method:'PUT', headers:{...this.headers(),'Content-Type':'application/json'}, body:JSON.stringify(body)});
-      if (r.ok) return;
-      if (r.status===404 || r.status===403) throw new Error('Could not save to GitHub: repo not found, or the token has no write access to it. Check Settings.');
-      if (r.status!==409 && r.status!==422) throw new Error('Could not save to GitHub ('+r.status+').');
-    }
-    throw new Error('Could not save to GitHub: the file kept changing. Try again.');
+  put(path, text, message, sha){
+    const body = {message, content:b64enc(text)}; if (sha) body.sha = sha;
+    return fetch(this.url(path), {method:'PUT', headers:{...this.headers(),'Content-Type':'application/json'}, body:JSON.stringify(body)});
   }
 };
-const DB = () => (cfg().gh && cfg().repo) ? GitHubDB : LocalDB;
+const dbPath = () => `glossary-${LANG}.json`, rulesPath = () => `rules-${LANG}.json`;
 
-/* =========================================================
-   Claude
-   ========================================================= */
-const SYSTEM = lang => `You translate website text from English. ${LANGS[lang].rules}
+async function loadDb(){ const f = await GH.get(dbPath()); if (!f) return {db:{}, sha:null}; const p = JSON.parse(f.text||'{}'); return {db:p.entries||p, sha:f.sha}; }
+async function saveDb(added){
+  for (let attempt=0; attempt<3; attempt++){
+    const {db, sha} = await loadDb();                    // always merge into the latest version
+    Object.assign(db, added);
+    const r = await GH.put(dbPath(), JSON.stringify({entries:sortObj(db)}, null, 2)+'\n', `Add ${Object.keys(added).length} entries`, sha);
+    if (r.ok) return;
+    if (r.status===404 || r.status===403) throw new Error('Could not save to the private repo: check the repo name and that the token can write to it.');
+    if (r.status!==409 && r.status!==422) throw new Error('Could not save to the private repo (error '+r.status+').');
+  }
+  throw new Error('Could not save: the file kept changing. Try again.');
+}
+async function loadRules(){
+  const f = await GH.get(rulesPath());
+  if (!f) throw new Error(`Could not find ${rulesPath()} in the private repo. Check the repo name in setup (⚙) and that the file exists.`);
+  let r; try{ r = JSON.parse(f.text); }catch(e){ throw new Error(rulesPath()+' is not valid JSON.'); }
+  if (!r.instructions) throw new Error(rulesPath()+' needs an "instructions" text.');
+  r.checks = [ ...(r.forbiddenWords||[]).map(w=>new RegExp('(?<!\\p{L})'+escRe(w)+'(?!\\p{L})','iu')),
+               ...(r.forbiddenPatterns||[]).map(p=>new RegExp(p,'iu')) ];
+  return r;
+}
+const ruleHits = (rules, text) => rules.checks.filter(re=>re.test(text)).length;
+
+/* ---------- Claude ---------- */
+const SYSTEM = rules => `You translate website text from English.
+${rules.instructions}
 You receive a JSON object whose keys are English texts. Reply with ONLY a JSON object with exactly the same keys, each value being the translation.
 Rules:
 - Markers like [[0]] and [[/0]] stand for HTML tags. Keep every marker exactly as written, placed around the matching translated words.
 - Keep brand names, product names and proper names unchanged.
 - No explanations, no code fences.`;
 
-async function askClaude(texts, extra=''){
+async function askClaude(texts, rules, extra=''){
   const obj = {}; texts.forEach(t=>obj[t]='');
   const r = await fetch('https://api.anthropic.com/v1/messages', {
     method:'POST',
     headers:{'x-api-key':cfg().key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
-    body: JSON.stringify({model:cfg().model, max_tokens:16000, system:SYSTEM(LANG)+extra, messages:[{role:'user', content:JSON.stringify(obj, null, 1)}]})
+    body: JSON.stringify({model:cfg().model, max_tokens:16000, system:SYSTEM(rules)+extra, messages:[{role:'user', content:JSON.stringify(obj, null, 1)}]})
   });
-  if (r.status===401) throw new Error('Claude API key was rejected. Check it in Settings.');
-  if (!r.ok){ let m=''; try{ m=(await r.json()).error.message; }catch(e){} throw new Error('Claude API error '+r.status+(m?': '+m:'')); }
+  if (r.status===401) throw new Error('Claude API key was rejected. Check it in setup (⚙).');
+  if (!r.ok){ let m=''; try{ m=(await r.json()).error.message; }catch(e){} throw new Error('Claude error '+r.status+(m?': '+m:'')); }
   const j = await r.json(); const txt = j.content.map(c=>c.text||'').join('');
   const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
-  if (a<0) throw new Error('Claude did not return a translation list.');
+  if (a<0) throw new Error('Claude did not return a usable answer.');
   return JSON.parse(txt.slice(a,b+1));
 }
 
-/* =========================================================
-   Number patterns: "up to 10 items" also matches "up to 20 items"
-   ========================================================= */
+/* ---------- reuse: same sentence with different numbers ---------- */
 const NUM_RE = /\[\[\/?\d+\]\]|(\d+(?:[.,]\d+)*)/g;
 const templ = s => { const nums=[]; const t=s.replace(NUM_RE,(m,g)=>{ if(!g) return m; nums.push(g); return `{#${nums.length-1}}`; }); return {t,nums}; };
 const swapSep = n => n.replace(/[.,]/g, c => c==='.'?',':'.');
-const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-function buildTemplates(db){ const T={};
-  for (const [en,pt] of Object.entries(db)){ const {t,nums}=templ(en); if(!nums.length) continue; let tp=pt, ok=true; const swap=[];
-    nums.forEach((n,i)=>{ if(!ok) return; for (const [c,sw] of [[n,false],[swapSep(n),true]]){ const re=new RegExp('(?<![\\d{#])'+escRe(c)+'(?!\\d)'); if(re.test(tp)){ tp=tp.replace(re,`{#${i}}`); swap[i]=sw; return; } } ok=false; });
+function buildTemplates(db, swapDec){ const T={};
+  for (const [en,out] of Object.entries(db)){ const {t,nums}=templ(en); if(!nums.length) continue; let tp=out, ok=true; const swap=[];
+    nums.forEach((n,i)=>{ if(!ok) return; const cands=[[n,false]]; if (swapDec) cands.push([swapSep(n),true]);
+      for (const [c,sw] of cands){ const re=new RegExp('(?<![\\d{#])'+escRe(c)+'(?!\\d)'); if(re.test(tp)){ tp=tp.replace(re,`{#${i}}`); swap[i]=sw; return; } } ok=false; });
     if (ok && !T[t]) T[t]={tp,swap}; }
   return T; }
 function lookup(key, db, T){
@@ -266,9 +226,7 @@ function lookup(key, db, T){
   return e ? e.tp.replace(/\{#(\d+)\}/g,(m,i)=> e.swap[i]?swapSep(nums[i]):nums[i]) : null;
 }
 
-/* =========================================================
-   HTML: split into texts, keep tags/images/layout untouched
-   ========================================================= */
+/* ---------- HTML: split into texts, keep tags/images/layout untouched ---------- */
 const SKIP = new Set(['SCRIPT','STYLE','NOSCRIPT','TEMPLATE','CODE','PRE','SVG','MATH']);
 const INLINE = new Set(['B','STRONG','I','EM','U','S','SPAN','SUP','SUB','BR','FONT','SMALL','BIG','MARK','A','ABBR','Q','CITE','INS','DEL']);
 const VOID = new Set(['br','img','wbr','hr','input']);
@@ -288,7 +246,7 @@ function toSegment(el){ const tags=[]; let s='';
       const open='<'+t+Array.from(c.attributes).map(a=>` ${a.name}="${escAttr(a.value)}"`).join('')+'>';
       if (VOID.has(t)){ tags.push({open,close:''}); s+=`[[${i}]]`; } else { tags.push({open,close:`</${t}>`}); s+=`[[${i}]]`; walk(c); s+=`[[/${i}]]`; } } } })(el);
   return {key:norm(s), tags}; }
-const restore = (pt, tags) => pt.split(/(\[\[\/?\d+\]\])/).map(p=>{ const m=p.match(/^\[\[(\/?)(\d+)\]\]$/); if(!m) return escTxt(p); const t=tags[+m[2]]; return m[1]?t.close:t.open; }).join('');
+const restore = (txt, tags) => txt.split(/(\[\[\/?\d+\]\])/).map(p=>{ const m=p.match(/^\[\[(\/?)(\d+)\]\]$/); if(!m) return escTxt(p); const t=tags[+m[2]]; return m[1]?t.close:t.open; }).join('');
 
 function collectAttrs(el, out){ for (const a of ATTRS){ const v=el.getAttribute(a); if (v && hasLetters(v)) out.push({kind:'attr',node:el,attr:a,key:norm(v)}); } }
 function collect(node, out){
@@ -301,81 +259,61 @@ function collect(node, out){
   }
 }
 function parse(src){ const doc=new DOMParser().parseFromString(src,'text/html'); const segs=[]; collect(doc.documentElement,segs); return {doc,segs}; }
-function apply(doc, segs, db, lang){
-  const T = buildTemplates(db); let done=0; const left=new Set();
-  for (const s of segs){ const pt = lookup(s.key, db, T);
-    if (pt==null || (s.kind==='html' && markers(pt)!==markers(s.key))) { left.add(s.key); continue; }
-    done++;
-    if (s.kind==='text'){ const v=s.node.nodeValue; s.node.nodeValue = v.match(/^\s*/)[0]+pt+v.match(/\s*$/)[0]; }
-    else if (s.kind==='attr') s.node.setAttribute(s.attr, pt);
-    else s.node.innerHTML = restore(pt, s.tags);
+function apply(doc, segs, db, rules){
+  const T = buildTemplates(db, rules.swapDecimal); const left=new Set();
+  for (const s of segs){ const out = lookup(s.key, db, T);
+    if (out==null || (s.kind==='html' && markers(out)!==markers(s.key))) { left.add(s.key); continue; }
+    if (s.kind==='text'){ const v=s.node.nodeValue; s.node.nodeValue = v.match(/^\s*/)[0]+out+v.match(/\s*$/)[0]; }
+    else if (s.kind==='attr') s.node.setAttribute(s.attr, out);
+    else s.node.innerHTML = restore(out, s.tags);
   }
-  doc.documentElement.setAttribute('lang', lang);
+  if (rules.htmlLang) doc.documentElement.setAttribute('lang', rules.htmlLang);
   doc.querySelectorAll('meta[http-equiv="Content-Type" i]').forEach(m=>m.remove());
   let cs=doc.querySelector('meta[charset]'); if(!cs){ cs=doc.createElement('meta'); doc.head.prepend(cs); } cs.setAttribute('charset','utf-8');
-  return {html:(doc.doctype?'<!DOCTYPE html>\n':'')+doc.documentElement.outerHTML, done, left:[...left]};
+  return {html:(doc.doctype?'<!DOCTYPE html>\n':'')+doc.documentElement.outerHTML, left:[...left]};
 }
 
-/* =========================================================
-   The automatic pipeline
-   ========================================================= */
+/* ---------- the automatic pipeline ---------- */
 let OUT='', OUT_NAME='';
-function step(text){ const li=document.createElement('li'); li.className='run'; li.innerHTML='<span class="ic"></span><span></span>'; li.lastChild.textContent=text; $('log').appendChild(li);
-  return { done(t){ li.className='done'; if(t) li.lastChild.textContent=t; }, err(t){ li.className='err'; li.lastChild.textContent=t; } }; }
-
 async function convert(src, name){
-  $('progress').hidden=false; $('result').hidden=true; $('log').innerHTML=''; $('dlMsg').textContent='';
-  if (!cfg().key){ step('Add your Claude API key in Settings first.').err('Add your Claude API key in Settings first.'); $('settings').classList.add('open'); return; }
-  const store_ = DB(); let s;
+  $('done').hidden = true;
+  if (!ready()){ $('setup').hidden = false; setStatus('err','Finish the setup first (fill in all three fields).'); return; }
   try{
-    s = step('Loading ' + store_.name() + '…');
-    let db = await store_.load(); s.done(`Database loaded: ${Object.keys(db).length} known texts.`);
+    setStatus('run','Checking your private repo…');
+    const rules = await loadRules();
+    const {db} = await loadDb();
 
-    s = step('Reading ' + name + '…');
     const keys = [...new Set(parse(src).segs.map(x=>x.key))];
-    const T = buildTemplates(db);
-    const missing = keys.filter(k=>{ const pt=lookup(k,db,T); return pt==null || markers(pt)!==markers(k); });
-    s.done(`Found ${keys.length} texts: ${keys.length-missing.length} already in the database, ${missing.length} new.`);
+    const T = buildTemplates(db, rules.swapDecimal);
+    const missing = keys.filter(k=>{ const o=lookup(k,db,T); return o==null || markers(o)!==markers(k); });
 
-    const added = {}; let rejected = 0;
-    if (missing.length){
-      const BATCH = 40;
-      for (let i=0;i<missing.length;i+=BATCH){
-        const part = missing.slice(i,i+BATCH);
-        s = step(`Asking Claude to translate ${missing.length>BATCH?`texts ${i+1}–${i+part.length} of ${missing.length}`:`${part.length} new text${part.length>1?'s':''}`}…`);
-        const reply = await askClaude(part);
-        const ok = (k,v) => typeof v==='string' && v.trim() && markers(v)===markers(k) && !brazilianHits(LANG, v);
-        let retry = part.filter(k=>!ok(k, reply[k]));
-        if (retry.length){                                   // one stricter second attempt
-          const nBr = retry.filter(k=>typeof reply[k]==='string' && brazilianHits(LANG, reply[k])).length;
-          if (nBr) step(`${nBr} answer${nBr>1?'s were':' was'} not European Portuguese. Rejected and asked Claude again.`).err && document.querySelector('#log li:last-child').classList.replace('run','warn');
-          const again = await askClaude(retry, `\nIMPORTANT: a previous answer used Brazilian Portuguese or broke the [[n]] markers. Use strictly European Portuguese vocabulary and grammar.`);
-          retry.forEach(k=>reply[k]=again[k]);
-        }
-        let brazil = 0;
-        for (const k of part){ const v = reply[k]; if (ok(k,v)) added[k]=v.trim(); else { rejected++; if (typeof v==='string' && brazilianHits(LANG,v)) brazil++; } }
-        s.done(`Claude translated ${part.filter(k=>added[k]).length} of ${part.length}.` + (brazil ? ` ${brazil} rejected for not being European Portuguese.` : ''));
+    const added = {}; let failed = 0;
+    const BATCH = 40;
+    for (let i=0;i<missing.length;i+=BATCH){
+      const part = missing.slice(i,i+BATCH);
+      setStatus('run', `Translating ${missing.length} new text${missing.length===1?'':'s'}…` + (missing.length>BATCH ? ` (${Math.min(i+BATCH,missing.length)} of ${missing.length})` : ''));
+      const reply = await askClaude(part, rules);
+      const ok = (k,v) => typeof v==='string' && v.trim() && markers(v)===markers(k) && !ruleHits(rules, v);
+      const retry = part.filter(k=>!ok(k, reply[k]));
+      if (retry.length){                                 // one stricter second attempt
+        setStatus('run', `Checking ${retry.length} answer${retry.length===1?'':'s'} again…`);
+        const again = await askClaude(retry, rules, `\nIMPORTANT: a previous answer broke the rules above or lost the [[n]] markers. Follow the rules strictly.`);
+        retry.forEach(k => reply[k] = again[k]);
       }
-      if (Object.keys(added).length){
-        s = step('Saving new translations to the ' + store_.name() + '…');
-        await store_.save(added); s.done(`Saved ${Object.keys(added).length} new translations. Next time they won't need Claude.`);
-      }
+      for (const k of part){ const v = reply[k]; if (ok(k,v)) added[k]=v.trim(); else failed++; }
     }
+    if (Object.keys(added).length){ setStatus('run','Saving to your private repo…'); await saveDb(added); }
 
-    s = step('Building the translated page…');
-    const {doc, segs} = parse(src); const r = apply(doc, segs, {...db, ...added}, LANG);
-    OUT = r.html; OUT_NAME = name.replace(/(\.html?)?$/i,'_'+LANG+'.html');
-    s.done(r.left.length ? `Done, but ${r.left.length} text(s) are still in English${rejected?' (Claude\'s answer for them broke the rules and was not used)':''}.` : 'Done. Every text is translated.');
-
-    $('fA').srcdoc = src; $('fB').srcdoc = OUT;
+    const {doc, segs} = parse(src); const r = apply(doc, segs, {...db, ...added}, rules);
+    OUT = r.html; OUT_NAME = name.replace(/(\.html?)?$/i,'_converted.html');
+    $('fB').srcdoc = OUT; $('done').hidden = false;
     const n = Object.keys(added).length;
-    $('newWrap').hidden = !n; $('newSum').textContent = `${n} new translation${n===1?'':'s'} added to the database this time`;
-    $('newList').innerHTML = Object.entries(added).map(([k,v])=>`<div>${escTxt(k)}<br><span>→ ${escTxt(v)}</span></div>`).join('');
-    $('result').hidden=false;
-  } catch(e){ (s||step('')).err(e.message || String(e)); }
+    if (r.left.length) setStatus('warn', `Done, but ${r.left.length} text${r.left.length===1?'':'s'} could not be converted within your rules and ${r.left.length===1?'was':'were'} left as they were.`);
+    else setStatus('ok', n ? `Done. ${n} new text${n===1?'':'s'} saved for next time.` : 'Done. Everything came from your private repo, nothing sent to Claude.');
+  } catch(e){ setStatus('err', e.message || String(e)); }
 }
 
-/* file input */
+/* ---------- file input ---------- */
 const drop=$('drop');
 drop.onclick = () => $('file').click();
 $('file').onchange = e => readFile(e.target.files[0]);
@@ -383,14 +321,10 @@ drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
 drop.ondragleave = () => drop.classList.remove('over');
 drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); readFile(e.dataTransfer.files[0]); };
 function readFile(f){ if(!f) return; const r=new FileReader(); r.onload=()=>convert(r.result, f.name); r.readAsText(f); $('file').value=''; }
+$('btnDl').onclick = () => { try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([OUT],{type:'text/html'})); a.download=OUT_NAME; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ setStatus('err','The browser blocked the download.'); } };
 
-$('btnDl').onclick = () => { try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([OUT],{type:'text/html'})); a.download=OUT_NAME; document.body.appendChild(a); a.click(); a.remove(); $('dlMsg').textContent='Downloaded '+OUT_NAME+'. (If nothing happened, use Copy HTML.)'; }catch(e){ $('dlMsg').textContent='Download blocked here, use Copy HTML.'; } };
-$('btnCopy').onclick = async () => { try{ await navigator.clipboard.writeText(OUT); $('dlMsg').textContent='HTML copied.'; }catch(e){ $('dlMsg').textContent='Copy blocked by the browser.'; } };
-
-LANG = (LANGS[store.get('lang')]?.enabled) ? store.get('lang') : 'pt-PT';
-renderLangs();
-loadSettingsForm();
-if (!cfg().key) $('settings').classList.add('open');
+renderLangs(); fillForm();
+if (!ready()) $('setup').hidden = false;
 </script>
 </body>
 </html>
