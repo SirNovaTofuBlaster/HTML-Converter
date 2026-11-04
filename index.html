@@ -59,26 +59,12 @@
 
   <section class="card" id="setup" hidden>
     <h2>Setup</h2>
-    <label for="sKey">Claude API key</label>
-    <input id="sKey" type="password" placeholder="sk-ant-…" autocomplete="off">
-    <div class="hint">From console.anthropic.com</div>
-
     <label for="sGh">GitHub token</label>
     <input id="sGh" type="password" placeholder="github_pat_…" autocomplete="off">
-    <div class="hint">Needs read and write access to your private repo only.</div>
+    <div class="hint">Needs access to your private repo only.</div>
 
     <label for="sRepo">Private repo</label>
     <input id="sRepo" type="text" placeholder="your-username/your-private-repo" autocomplete="off">
-
-    <details>
-      <summary>Advanced</summary>
-      <label for="sModel">Claude model</label>
-      <select id="sModel">
-        <option value="claude-sonnet-5-5">Sonnet 5.5 (recommended)</option>
-        <option value="claude-haiku-5-5">Haiku 5.5 (cheaper)</option>
-        <option value="claude-opus-5-5">Opus 5.5 (most expensive)</option>
-      </select>
-    </details>
 
     <div class="row">
       <button class="primary" id="btnSave">Save</button>
@@ -97,6 +83,8 @@
     <div id="status" hidden></div>
     <div id="done" hidden>
       <button class="primary" id="btnDl">Download</button>
+      <button id="btnMiss" hidden>Copy missing texts</button>
+      <span class="small" id="copyMsg"></span>
       <details><summary>Preview</summary><iframe id="fB" sandbox></iframe></details>
     </div>
   </section>
@@ -115,8 +103,8 @@ const store = {
   get(k, d=''){ try{ return localStorage.getItem('htmlconv.'+k) ?? d; }catch(e){ return d; } },
   set(k, v){ try{ v ? localStorage.setItem('htmlconv.'+k, v) : localStorage.removeItem('htmlconv.'+k); }catch(e){} }
 };
-const cfg = () => ({ key:store.get('key'), gh:store.get('gh'), repo:store.get('repo'), model:store.get('model','claude-sonnet-5-5') });
-const ready = () => { const c = cfg(); return !!(c.key && c.gh && c.repo); };
+const cfg = () => ({ gh:store.get('gh'), repo:store.get('repo') });
+const ready = () => { const c = cfg(); return !!(c.gh && c.repo); };
 
 let LANG = LANGS[store.get('lang')]?.enabled ? store.get('lang') : 'pt';
 function renderLangs(){
@@ -124,25 +112,22 @@ function renderLangs(){
     `<button class="flag${code===LANG?' on':''}" data-code="${code}" role="radio" aria-checked="${code===LANG}" aria-label="Language" ${l.enabled?'':'disabled title="Coming soon"'}>${l.flag}</button>`).join('');
   $('langbox').querySelectorAll('.flag:not(:disabled)').forEach(b => b.onclick = () => { LANG = b.dataset.code; store.set('lang', LANG); renderLangs(); });
 }
-function fillForm(){ const c = cfg(); $('sKey').value=c.key; $('sGh').value=c.gh; $('sRepo').value=c.repo; $('sModel').value=c.model; }
+function fillForm(){ const c = cfg(); $('sGh').value=c.gh; $('sRepo').value=c.repo; }
 $('btnSettings').onclick = () => { $('setup').hidden = !$('setup').hidden; };
 $('btnSave').onclick = () => {
-  store.set('key',$('sKey').value.trim()); store.set('gh',$('sGh').value.trim());
+  store.set('gh',$('sGh').value.trim());
   store.set('repo',$('sRepo').value.trim().replace(/^https?:\/\/github\.com\//,'').replace(/\.git$/,'').replace(/\/$/,''));
-  store.set('model',$('sModel').value);
   if (ready()){ $('setMsg').textContent=''; $('setup').hidden = true; setStatus('ok','Saved. Drop a file to start.'); }
-  else { $('setMsg').style.color='var(--bad)'; $('setMsg').textContent='Please fill in all three fields.'; }
+  else { $('setMsg').style.color='var(--bad)'; $('setMsg').textContent='Please fill in both fields.'; }
 };
-$('btnForget').onclick = () => { ['key','gh','repo'].forEach(k=>store.set(k,'')); fillForm(); $('setMsg').style.color='var(--ok)'; $('setMsg').textContent='Removed from this computer.'; };
+$('btnForget').onclick = () => { ['gh','repo'].forEach(k=>store.set(k,'')); fillForm(); $('setMsg').style.color='var(--ok)'; $('setMsg').textContent='Removed from this computer.'; };
 
 /* ---------- status line ---------- */
 function setStatus(kind, text){ const s=$('status'); if(!text){ s.hidden=true; return; } s.hidden=false; s.className=kind;
   s.innerHTML = (kind==='run' ? '<span class="spin"></span>' : '') + '<span></span>'; s.lastChild.textContent = text; }
 
-/* ---------- private repo: database + rules ---------- */
-const b64enc = str => { const bytes=new TextEncoder().encode(str); let bin=''; for (let i=0;i<bytes.length;i+=0x8000) bin+=String.fromCharCode.apply(null,bytes.subarray(i,i+0x8000)); return btoa(bin); };
+/* ---------- private repo: database + settings ---------- */
 const b64dec = b64 => new TextDecoder().decode(Uint8Array.from(atob(b64.replace(/\n/g,'')), c=>c.charCodeAt(0)));
-const sortObj = o => Object.fromEntries(Object.keys(o).sort((a,b)=>a.localeCompare(b)).map(k=>[k,o[k]]));
 const escRe = s => s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
 
 const GH = {
@@ -155,59 +140,14 @@ const GH = {
     if (r.status===403) throw new Error('GitHub token has no access to the private repo. Check it in setup (⚙).');
     if (!r.ok) throw new Error('GitHub error '+r.status+'.');
     const j = await r.json(); return {text:b64dec(j.content), sha:j.sha};
-  },
-  put(path, text, message, sha){
-    const body = {message, content:b64enc(text)}; if (sha) body.sha = sha;
-    return fetch(this.url(path), {method:'PUT', headers:{...this.headers(),'Content-Type':'application/json'}, body:JSON.stringify(body)});
   }
 };
 const dbPath = () => `glossary-${LANG}.json`, rulesPath = () => `rules-${LANG}.json`;
 
 async function loadDb(){ const f = await GH.get(dbPath()); if (!f) return {db:{}, sha:null}; const p = JSON.parse(f.text||'{}'); return {db:p.entries||p, sha:f.sha}; }
-async function saveDb(added){
-  for (let attempt=0; attempt<3; attempt++){
-    const {db, sha} = await loadDb();                    // always merge into the latest version
-    Object.assign(db, added);
-    const r = await GH.put(dbPath(), JSON.stringify({entries:sortObj(db)}, null, 2)+'\n', `Add ${Object.keys(added).length} entries`, sha);
-    if (r.ok) return;
-    if (r.status===404 || r.status===403) throw new Error('Could not save to the private repo: check the repo name and that the token can write to it.');
-    if (r.status!==409 && r.status!==422) throw new Error('Could not save to the private repo (error '+r.status+').');
-  }
-  throw new Error('Could not save: the file kept changing. Try again.');
-}
-async function loadRules(){
-  const f = await GH.get(rulesPath());
-  if (!f) throw new Error(`Could not find ${rulesPath()} in the private repo. Check the repo name in setup (⚙) and that the file exists.`);
-  let r; try{ r = JSON.parse(f.text); }catch(e){ throw new Error(rulesPath()+' is not valid JSON.'); }
-  if (!r.instructions) throw new Error(rulesPath()+' needs an "instructions" text.');
-  r.checks = [ ...(r.forbiddenWords||[]).map(w=>new RegExp('(?<!\\p{L})'+escRe(w)+'(?!\\p{L})','iu')),
-               ...(r.forbiddenPatterns||[]).map(p=>new RegExp(p,'iu')) ];
-  return r;
-}
-const ruleHits = (rules, text) => rules.checks.filter(re=>re.test(text)).length;
-
-/* ---------- Claude ---------- */
-const SYSTEM = rules => `You translate website text from English.
-${rules.instructions}
-You receive a JSON object whose keys are English texts. Reply with ONLY a JSON object with exactly the same keys, each value being the translation.
-Rules:
-- Markers like [[0]] and [[/0]] stand for HTML tags. Keep every marker exactly as written, placed around the matching translated words.
-- Keep brand names, product names and proper names unchanged.
-- No explanations, no code fences.`;
-
-async function askClaude(texts, rules, extra=''){
-  const obj = {}; texts.forEach(t=>obj[t]='');
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method:'POST',
-    headers:{'x-api-key':cfg().key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true','content-type':'application/json'},
-    body: JSON.stringify({model:cfg().model, max_tokens:16000, system:SYSTEM(rules)+extra, messages:[{role:'user', content:JSON.stringify(obj, null, 1)}]})
-  });
-  if (r.status===401) throw new Error('Claude API key was rejected. Check it in setup (⚙).');
-  if (!r.ok){ let m=''; try{ m=(await r.json()).error.message; }catch(e){} throw new Error('Claude error '+r.status+(m?': '+m:'')); }
-  const j = await r.json(); const txt = j.content.map(c=>c.text||'').join('');
-  const a = txt.indexOf('{'), b = txt.lastIndexOf('}');
-  if (a<0) throw new Error('Claude did not return a usable answer.');
-  return JSON.parse(txt.slice(a,b+1));
+async function loadRules(){                          // optional: settings for this language
+  const f = await GH.get(rulesPath()); if (!f) return {};
+  try{ return JSON.parse(f.text) || {}; }catch(e){ throw new Error(rulesPath()+' is not valid JSON.'); }
 }
 
 /* ---------- reuse: same sentence with different numbers ---------- */
@@ -273,43 +213,22 @@ function apply(doc, segs, db, rules){
   return {html:(doc.doctype?'<!DOCTYPE html>\n':'')+doc.documentElement.outerHTML, left:[...left]};
 }
 
-/* ---------- the automatic pipeline ---------- */
-let OUT='', OUT_NAME='';
+/* ---------- the pipeline ---------- */
+let OUT='', OUT_NAME='', MISSING=[];
 async function convert(src, name){
-  $('done').hidden = true;
-  if (!ready()){ $('setup').hidden = false; setStatus('err','Finish the setup first (fill in all three fields).'); return; }
+  $('done').hidden = true; $('copyMsg').textContent='';
+  if (!ready()){ $('setup').hidden = false; setStatus('err','Finish the setup first (fill in both fields).'); return; }
   try{
-    setStatus('run','Checking your private repo…');
+    setStatus('run','Reading your private repo…');
     const rules = await loadRules();
     const {db} = await loadDb();
-
-    const keys = [...new Set(parse(src).segs.map(x=>x.key))];
-    const T = buildTemplates(db, rules.swapDecimal);
-    const missing = keys.filter(k=>{ const o=lookup(k,db,T); return o==null || markers(o)!==markers(k); });
-
-    const added = {}; let failed = 0;
-    const BATCH = 40;
-    for (let i=0;i<missing.length;i+=BATCH){
-      const part = missing.slice(i,i+BATCH);
-      setStatus('run', `Translating ${missing.length} new text${missing.length===1?'':'s'}…` + (missing.length>BATCH ? ` (${Math.min(i+BATCH,missing.length)} of ${missing.length})` : ''));
-      const reply = await askClaude(part, rules);
-      const ok = (k,v) => typeof v==='string' && v.trim() && markers(v)===markers(k) && !ruleHits(rules, v);
-      const retry = part.filter(k=>!ok(k, reply[k]));
-      if (retry.length){                                 // one stricter second attempt
-        setStatus('run', `Checking ${retry.length} answer${retry.length===1?'':'s'} again…`);
-        const again = await askClaude(retry, rules, `\nIMPORTANT: a previous answer broke the rules above or lost the [[n]] markers. Follow the rules strictly.`);
-        retry.forEach(k => reply[k] = again[k]);
-      }
-      for (const k of part){ const v = reply[k]; if (ok(k,v)) added[k]=v.trim(); else failed++; }
-    }
-    if (Object.keys(added).length){ setStatus('run','Saving to your private repo…'); await saveDb(added); }
-
-    const {doc, segs} = parse(src); const r = apply(doc, segs, {...db, ...added}, rules);
-    OUT = r.html; OUT_NAME = name.replace(/(\.html?)?$/i,'_converted.html');
-    $('fB').srcdoc = OUT; $('done').hidden = false;
-    const n = Object.keys(added).length;
-    if (r.left.length) setStatus('warn', `Done, but ${r.left.length} text${r.left.length===1?'':'s'} could not be converted within your rules and ${r.left.length===1?'was':'were'} left as they were.`);
-    else setStatus('ok', n ? `Done. ${n} new text${n===1?'':'s'} saved for next time.` : 'Done. Everything came from your private repo, nothing sent to Claude.');
+    const {doc, segs} = parse(src);
+    const r = apply(doc, segs, db, rules);
+    OUT = r.html; OUT_NAME = name.replace(/(\.html?)?$/i,'_converted.html'); MISSING = r.left;
+    $('fB').srcdoc = OUT; $('done').hidden = false; $('btnMiss').hidden = !MISSING.length;
+    const n = MISSING.length;
+    if (n) setStatus('warn', `Done, but ${n} text${n===1?' isn\'t':'s aren\'t'} in the database yet and ${n===1?'was':'were'} left as written.`);
+    else setStatus('ok','Done. Every text was found in the database.');
   } catch(e){ setStatus('err', e.message || String(e)); }
 }
 
@@ -323,6 +242,11 @@ drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); readFile
 function readFile(f){ if(!f) return; const r=new FileReader(); r.onload=()=>convert(r.result, f.name); r.readAsText(f); $('file').value=''; }
 $('btnDl').onclick = () => { try{ const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([OUT],{type:'text/html'})); a.download=OUT_NAME; document.body.appendChild(a); a.click(); a.remove(); }catch(e){ setStatus('err','The browser blocked the download.'); } };
 
+$('btnMiss').onclick = async () => {
+  const o = {}; MISSING.forEach(k=>o[k]='');
+  try{ await navigator.clipboard.writeText(JSON.stringify(o, null, 2)); $('copyMsg').textContent='Copied. Paste it into the chat.'; }
+  catch(e){ $('copyMsg').textContent='The browser blocked copying.'; }
+};
 renderLangs(); fillForm();
 if (!ready()) $('setup').hidden = false;
 </script>
