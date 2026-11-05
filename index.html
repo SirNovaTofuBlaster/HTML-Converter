@@ -211,10 +211,21 @@ function ctxValue(segs, i, rules){
     while (j<segs.length){ if (segs[j].kind==='attr'){ j++; continue; } if (gap>0 && !startsWord(segs[j].key,r.next)){ gap--; j++; continue; } break; }
     if (segs[j] && segs[j].kind!=='attr' && startsWord(segs[j].key, r.next)) return r.value; }
   return null; }
+/* articleAgreement (from the rules file): when a text ends with "THE" and the text after it (image labels skipped) begins with a given word,
+   fix the gender/number of the article that ends the translation, e.g. {"next":"FEATURE","map":{"O":"A","DO":"DA"}} turns "...ATIVAR O" into "...ATIVAR A". */
+function agreeEnd(segs, i, out, rules){
+  const L = rules.articleAgreement; if (!Array.isArray(L) || out==null || !/(^|\s)THE$/.test(plain(segs[i].key))) return out;
+  for (const r of L){ let j=i+1; while (j<segs.length && segs[j].kind==='attr') j++;
+    if (!segs[j] || !startsWord(segs[j].key, r.next)) continue;
+    const m = out.match(/^([\s\S]*?)([\p{L}]+)(\s*)$/u); if (!m) return out;
+    const w = m[2], up = w.toUpperCase(); if (!Object.prototype.hasOwnProperty.call(r.map, up)) return out;
+    let n = r.map[up]; if (w!==up) n = w[0]===up[0] && w.slice(1)===w.slice(1).toLowerCase() ? n.charAt(0)+n.slice(1).toLowerCase() : n.toLowerCase();
+    return m[1]+n+m[3]; }
+  return out; }
 function apply(doc, segs, db, rules){
   const T = buildTemplates(db, rules.swapDecimal); const left=new Set();
   for (let si=0; si<segs.length; si++){ const s = segs[si]; let out = lookup(s.key, db, T);
-    const cv = ctxValue(segs, si, rules); if (cv!=null) out = cv;
+    const cv = ctxValue(segs, si, rules); if (cv!=null) out = cv; else out = agreeEnd(segs, si, out, rules);
     if (out==null || (s.kind==='html' && markers(out)!==markers(s.key))) { left.add(s.key); continue; }
     if (s.kind==='text'){ const v=s.node.nodeValue; s.node.nodeValue = v.match(/^\s*/)[0]+out+v.match(/\s*$/)[0]; }
     else if (s.kind==='attr') s.node.setAttribute(s.attr, out);
