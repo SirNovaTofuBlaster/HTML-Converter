@@ -200,9 +200,21 @@ function collect(node, out){
   }
 }
 function parse(src){ const doc=new DOMParser().parseFromString(src,'text/html'); const segs=[]; collect(doc.documentElement,segs); return {doc,segs}; }
+/* context entries (from the language's rules file): pick a different translation for a text depending on the text that follows it,
+   e.g. {"text":"THE","next":"FEATURE","value":"A"} for languages where the article must agree with the next word. Image labels are skipped. */
+const plain = k => k.replace(/\[\[\/?\d+\]\]/g,'').trim();
+const startsWord = (k,p) => { k=plain(k); return k===p || (k.startsWith(p) && !/\p{L}/u.test(k[p.length])); };
+function ctxValue(segs, i, rules){
+  const L = rules.contextEntries; if (!Array.isArray(L)) return null;
+  for (const r of L){ if (r.text !== segs[i].key) continue;
+    let j=i+1, gap=r.gap||0;
+    while (j<segs.length){ if (segs[j].kind==='attr'){ j++; continue; } if (gap>0 && !startsWord(segs[j].key,r.next)){ gap--; j++; continue; } break; }
+    if (segs[j] && segs[j].kind!=='attr' && startsWord(segs[j].key, r.next)) return r.value; }
+  return null; }
 function apply(doc, segs, db, rules){
   const T = buildTemplates(db, rules.swapDecimal); const left=new Set();
-  for (const s of segs){ const out = lookup(s.key, db, T);
+  for (let si=0; si<segs.length; si++){ const s = segs[si]; let out = lookup(s.key, db, T);
+    const cv = ctxValue(segs, si, rules); if (cv!=null) out = cv;
     if (out==null || (s.kind==='html' && markers(out)!==markers(s.key))) { left.add(s.key); continue; }
     if (s.kind==='text'){ const v=s.node.nodeValue; s.node.nodeValue = v.match(/^\s*/)[0]+out+v.match(/\s*$/)[0]; }
     else if (s.kind==='attr') s.node.setAttribute(s.attr, out);
